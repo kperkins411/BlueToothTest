@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void toggleServer(View view) {
-        b_server = !b_server;
+        b_server = cb_Server.isChecked();
 
         if(b_server)
             b_action.setText("Start");
