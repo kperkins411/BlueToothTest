@@ -1,9 +1,7 @@
 package com.example.keith.bluetoothtest;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import java.io.IOException;
@@ -15,15 +13,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BaseThread extends Thread {
     private static final String TAG = "BaseThread";
-    private Activity act;
-    private CallBack cb;
-    protected AtomicBoolean is_mmSocket_connected;
-    protected MyBlueToothService  mmBTS;
+    private    final Activity act;
+    private    final CallBack cb;
+    protected  final AtomicBoolean is_mmSocket_connected;
+    protected  MyBlueToothService  mmBTS;
     protected  BluetoothSocket mmSocket;                  //does actual communications
 
     public BaseThread(Activity act, CallBack cb) {
         this.act = act;
         this.cb = cb;
+        is_mmSocket_connected = new AtomicBoolean(false);
     }
 
     protected void manageMyConnectedSocket(BluetoothSocket mmSocket) {
@@ -62,10 +61,12 @@ public class BaseThread extends Thread {
         }
 
         //if here mmBTS is fully constructed
+        //send info to paired device on a seperate thread
         SendThread thd = new SendThread(info);
     }
 
     // Closes the client socket and causes the thread to finish.
+    // (all blocking calls are on a socket, any socket exception exits code)
     public void cancel() {
         LogData("Canceling thread");
         try {

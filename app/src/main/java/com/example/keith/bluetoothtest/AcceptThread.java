@@ -3,17 +3,9 @@ package com.example.keith.bluetoothtest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
-import android.bluetooth.BluetoothSocket;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-
-import com.example.keith.bluetoothtest.Constants;
-
 import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by keith on 7/6/18.
@@ -38,9 +30,7 @@ class AcceptThread extends BaseThread {
             Log.e(TAG, "Socket's listen() method failed", e);
         } 
         mmServerSocket = tmp;
-
-        is_mmSocket_connected = new AtomicBoolean(false);
-    }
+   }
 
     public void run() {
         // Keep listening until exception occurs or a socket is returned.

@@ -2,23 +2,9 @@ package com.example.keith.bluetoothtest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothServerSocket;
-import android.bluetooth.BluetoothSocket;
 import android.util.Log;
-
-import com.example.keith.bluetoothtest.Constants;
-
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import com.example.keith.bluetoothtest.Constants;
 
 /**
  * Created by keith on 7/6/18.
@@ -44,8 +30,6 @@ class ConnectThread extends BaseThread {
         }
 
         this.mBluetoothAdapter = mBluetoothAdapter;
-
-        is_mmSocket_connected = new AtomicBoolean(false);
     }
 
     public void run() {
