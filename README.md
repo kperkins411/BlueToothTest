@@ -1,5 +1,5 @@
 # BlueToothTest
-## An Android bluetooth tester
+## A bidirectional Android bluetooth tester
 
 Project used to debug bluetooth for a much larger NASA project
 Here is a screenshot of the app being used as a client and a server<br/>
