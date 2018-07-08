@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
-
 
 
     <TextView
@@ -12,10 +12,15 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:text="Please connect two devices running this app. Outside this app, please ensure that they are paired using Bluetooth settings.\nSelect one instance to be a server.\n
-See https://developer.android.com/guide/topics/connectivity/bluetooth#ConnectDevices"
-        android:maxLines="4"
-        android:lines="4" />
+        android:lines="3"
+        android:maxLines="3"
+        android:text="Connect 2 previously paired devices.  Please see 'Bluetooth Overview' at developer.android.com"
+        android:textSize="18dp" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <CheckBox
         android:id="@+id/cb_Server"
         android:layout_width="wrap_content"

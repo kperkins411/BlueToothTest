@@ -2,10 +2,12 @@ package com.example.keith.bluetoothtest;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -32,14 +34,27 @@ public class MainActivity extends AppCompatActivity {
     private TextView tv_results;
     private boolean b_server = false;
 
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothDevice mBluetoothDevice;
+    //handles all the bluetooth setup
+    //including getting adapters and devices
+    private BT_Setup btSetup;
 
     private String results;
     enum TXT_TYPE{RED,GREEN,BLUE,NORMAL};       //used to color textview lines
 
     private AcceptThread mtAccept;
     private ConnectThread mtConnect;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        //if we enabled bluetooth then get the adapter
+        if (requestCode==BT_Setup.REQUEST_ENABLE_BT && resultCode==RESULT_OK){
+            //TODO repeat whatever failed since bluetooth was off
+            setupSimpleSpinner();
+        }
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +76,10 @@ public class MainActivity extends AppCompatActivity {
         tv_results.setText(results);
         results="";
 
-        showBTDevices();
+        btSetup = new BT_Setup(this);
+
+        //if bluetooth not on this spinner will never be properly created
+        setupSimpleSpinner();
 
         enableUI(false);
 
@@ -84,8 +102,13 @@ public class MainActivity extends AppCompatActivity {
 
     public void do_send(View view) {
         String info = et_toSend.getText().toString();
-        display(TXT_TYPE.GREEN,info);
-        mtConnect.send(info);
+        display(TXT_TYPE.GREEN, info);
+
+        if (b_server) {
+            mtAccept.send(info);
+        } else {
+            mtConnect.send(info);
+        }
     }
 
     public void do_action(View view) {
@@ -94,18 +117,20 @@ public class MainActivity extends AppCompatActivity {
         tv_results.setText(results);
 
         //see if bluetooth there
-        Boolean enableUI = getBTAdapter();
+        BluetoothAdapter mBluetoothAdapter = btSetup.getBTAdapter();
+        Boolean enableUI = (mBluetoothAdapter!=null);
 
         //see if we want to be a server
         b_server = cb_Server.isChecked();
 
         if (b_server) {
             //launch a thread to wait for connection
-            mtAccept = new AcceptThread(this, mBluetoothAdapter, myCallback);
+            mtAccept = new AcceptThread(this, myCallback);
             mtAccept.start();
         }
         else {
-            if (!getBTDevice(sp_devices.getSelectedItem().toString())) {
+            BluetoothDevice mBluetoothDevice = btSetup.getBTDevice(sp_devices.getSelectedItem().toString());
+            if (mBluetoothDevice == null) {
                 display(TXT_TYPE.GREEN, "Cannot get BT device");
             }
             else{
@@ -137,8 +162,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void enableUI(boolean bEnable){
         b_disconnect.setEnabled(bEnable);
-        et_toSend.setEnabled(bEnable && !b_server);
-        b_send.setEnabled(bEnable && !b_server);
+        et_toSend.setEnabled(bEnable );
+        b_send.setEnabled(bEnable );
 
         sp_devices.setEnabled(!bEnable );
 
@@ -146,93 +171,23 @@ public class MainActivity extends AppCompatActivity {
         cb_Server.setEnabled(!bEnable);
     }
 
-    private boolean getBTDevice(String name){
+    /**
+     * get a list of the names of the bluetooth devices
+     * put them in the spinner
+     */
+    private void setupSimpleSpinner() {
+        ArrayList<String> myList = btSetup.getBTDevicesList();
+        if (myList != null) {
+            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                    this,
+                    android.R.layout.simple_list_item_1,
+                    myList);
 
-        //get a list of devices
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-        if (pairedDevices.size() > 0) {
-            // There are paired devices. Get the name and address of each paired device.
-            for (BluetoothDevice device : pairedDevices) {
-                String dev_name = device.getName();
-                boolean bres = name.equals(dev_name);
-                if (name.equals(dev_name))
-                {
-                    mBluetoothDevice = device;
-                    return true;
-                }
-            }
+            sp_devices.setAdapter(arrayAdapter);
         }
-        return false;
     }
 
-    private void setupSimpleSpinner(ArrayList<String> myList) {
-        //create a data adapter to fill above spinner with choices
-
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
-                this,
-                android.R.layout.simple_list_item_1,
-                myList );
-
-        sp_devices.setAdapter(arrayAdapter);
-
-        //respond when spinner clicked
-        sp_devices.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public static final int SELECTED_ITEM = 0;
-
-            @Override
-            public void onItemSelected(AdapterView<?> arg0, View arg1, int pos, long rowid) {
-                if (arg0.getChildAt(SELECTED_ITEM) != null) {
-//                    ((TextView) arg0.getChildAt(SELECTED_ITEM)).setTextColor(Color.WHITE);
-//                    Toast.makeText(MainActivity.this, (String) arg0.getItemAtPosition(pos), Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> arg0) {
-            }
-        });
-    }
-
-    private void showBTDevices(){
-        if(!getBTAdapter())
-            return;
-
-        //list of all the bluetooth devices we know about
-        ArrayList<String> myList = new ArrayList<String>();
-
-        //get a list of devices
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-        if (pairedDevices.size() > 0) {
-            // There are paired devices. Get the name and address of each paired device.
-            for (BluetoothDevice device : pairedDevices) {
-                myList.add(device.getName());
-            }
-        }
-
-        //show in spinner
-        setupSimpleSpinner(myList);
-    }
-    private boolean getBTAdapter(){
-        //only get it once
-        if (mBluetoothAdapter != null)
-            return true;
-
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-        if (mBluetoothAdapter== null){
-            display(TXT_TYPE.RED,"Device does not support bluetooth");
-            return false;
-        }
-
-        if (!mBluetoothAdapter.isEnabled()){
-            display(TXT_TYPE.RED,"Please enable bluetooth");
-            return false;
-        }
-
-        return (mBluetoothAdapter != null);
-    }
-
-   public void display(String info){
+    public void display(String info){
         display(TXT_TYPE.NORMAL,info);
     }
     public void display(TXT_TYPE tt, String info){

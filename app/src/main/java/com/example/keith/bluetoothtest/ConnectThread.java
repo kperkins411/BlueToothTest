@@ -23,34 +23,29 @@ import com.example.keith.bluetoothtest.Constants;
 /**
  * Created by keith on 7/6/18.
  */
-class ConnectThread extends Thread {
+class ConnectThread extends BaseThread {
     private static final String TAG = "ConnectThread";
-    private BluetoothSocket mmSocket;
-    private BluetoothDevice mmDevice;
-    private Activity act;
-    private CallBack cb;
-    private AtomicBoolean doWork;
-    private BluetoothAdapter mBluetoothAdapter;
-    private MyBlueToothService  mmBTS;
-    Lock mmBTS_lock;    //used to ensure mmBTS constructed before use
+    private final BluetoothDevice mmDevice;
+    protected BluetoothAdapter mBluetoothAdapter;
+
 
     public ConnectThread(Activity act, BluetoothDevice device,BluetoothAdapter mBluetoothAdapter, CallBack cb) {
+        super(act,cb);
 
-        mmDevice = device;
+        this.mmDevice = device;
+
         try{
             // Get a BluetoothSocket to connect with the given BluetoothDevice.
-            // MY_UUID is the app's UUID string, also used in the server code.
+            // A UUID identifies a service that is available on a particular device. Our service
+            //is defined by Constants.COMMAND_UUID
             mmSocket = device.createRfcommSocketToServiceRecord(UUID.fromString(Constants.COMMAND_UUID));
         } catch (IOException e) {
             Log.e(TAG, "Socket's create() method failed", e);
         }
 
-        this.act = act;
-        this.cb = cb;
         this.mBluetoothAdapter = mBluetoothAdapter;
-        mmBTS_lock = new ReentrantLock();
 
-//        doWork = new AtomicBoolean(true);
+        is_mmSocket_connected = new AtomicBoolean(false);
     }
 
     public void run() {
@@ -78,62 +73,12 @@ class ConnectThread extends Thread {
             LogData("Exiting thread");
             return;
         }
+        //indicate that its OK to use
+        is_mmSocket_connected.set(true);
         LogData("Successful connection!");
 
         // The connection attempt succeeded. Perform work associated with
         // the connection in a separate thread.
         manageMyConnectedSocket(mmSocket);
-    }
-
-    private void manageMyConnectedSocket(BluetoothSocket mmSocket) {
-        LogData("about to create mmBTS");
-
-        //make sure mmBTS is either fully constructed or null when used
-        mmBTS_lock.lock();
-        try {
-            //create the clientSide Workhorse
-            mmBTS = new MyBlueToothService(act,mmSocket, cb);
-        }finally {
-            mmBTS_lock.unlock();
-        }
-
-        LogData("done working leaving");
-    }
-
-    public void send(String info){
-        mmBTS_lock.lock();
-        try {
-            if (mmBTS == null) {
-                LogData("mmBTS is null cannot send");
-                return;
-            }
-        }finally {
-            mmBTS_lock.unlock();
-        }
-
-        //if here mmBTS is fully constructed
-        mmBTS.send(info);
-    }
-
-    // Closes the client socket and causes the thread to finish.
-    public void cancel() {
-        LogData("Canceling thread");
-//        doWork.set(false);
-        try {
-            mmSocket.close();
-        } catch (IOException e) {
-            LogData("Canceling thread,  mmSocket.close() threw exception");
-            Log.e(TAG, "Could not close the client socket", e);
-        }
-    }
-
-    //pass some info back to calling thread
-    private void LogData(final String s){
-        act.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                cb.displayinTV(s);
-            }
-        });
     }
 }

@@ -69,18 +69,19 @@ public class MyBlueToothService {
                 break;
             }
         }
+        LogData("Exiting");
     }
 
     //Client
     //Call this from the main activity to send data to the remote device.
-    public void send(String info) {
+    public boolean send(String info) {
         byte[] bytes = new byte[0];
         try {
             bytes = info.getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
             Log.e(TAG, "UnsupportedEncodingException" + e);
             LogData("UnsupportedEncodingException ");
-            return;
+            return false;
         }
 
         try {
@@ -89,7 +90,9 @@ public class MyBlueToothService {
         } catch (IOException e) {
             Log.e(TAG, "Error occurred when sending data", e);
             LogData("Error occurred when sending data");
+            return false;
         }
+        return true;
     }
 
     // Call this method from the main activity to shut down the connection.

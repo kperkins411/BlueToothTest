@@ -19,17 +19,14 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by keith on 7/6/18.
  */
 
-class AcceptThread extends Thread {
+class AcceptThread extends BaseThread {
+
     private static final String TAG ="AcceptThread" ;
     private final BluetoothServerSocket mmServerSocket; //waits for connections
-    private  BluetoothSocket mmSocket;                  //does actual communications
-    private AppCompatActivity act;
-    private CallBack cb;
-    private AtomicBoolean doWork;
-    private MyBlueToothService  mmBTS;
-    Lock mmBTS_lock;    //used to ensure mmBTS constructed before use
 
-    public AcceptThread(AppCompatActivity act, BluetoothAdapter mBluetoothAdapter ,CallBack cb ) {
+    public AcceptThread(Activity act, CallBack cb ) {
+        super(act, cb);
+
         // Use a temporary object that is later assigned to mmServerSocket
         // because mmServerSocket is final.
         BluetoothServerSocket tmp = null;
@@ -41,11 +38,8 @@ class AcceptThread extends Thread {
             Log.e(TAG, "Socket's listen() method failed", e);
         } 
         mmServerSocket = tmp;
-        this.act = act;
-        this.cb = cb;
-        mmBTS_lock = new ReentrantLock();
 
-        doWork = new AtomicBoolean(true);
+        is_mmSocket_connected = new AtomicBoolean(false);
     }
 
     public void run() {
@@ -61,6 +55,9 @@ class AcceptThread extends Thread {
 
             LogData("Socket's accepted");
             if (mmSocket != null) {
+                //indicate that its OK to use
+                is_mmSocket_connected.set(true);
+
                 // A connection was accepted. Perform work associated with
                 // the connection in a separate thread.
                 manageMyConnectedSocket(mmSocket);
@@ -69,47 +66,13 @@ class AcceptThread extends Thread {
         }
     }
 
-    //pass some info back to calling thread
-    private void LogData(final String s){
-        act.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                cb.displayinTV(s);
-            }
-        });
-    }
-
     // Closes the connect socket and causes the thread to finish.
     public void cancel() {
-        LogData("Canceling thread");
-        doWork.set(false);
+        super.cancel();
         try {
             mmServerSocket.close();
         } catch (IOException e) {
             Log.e(TAG, "Could not close mmServerSocket", e);
         }
-        try {
-            mmSocket.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Could not close mmSocket", e);
-        }
-    }
-
-    private void manageMyConnectedSocket(BluetoothSocket mmSocket) {
-        LogData("about to work");
-
-        //make sure mmBTS is either fully constructed or null when used
-        mmBTS_lock.lock();
-        try {
-            //create the clientSide Workhorse
-            mmBTS = new MyBlueToothService(act,mmSocket, cb);
-        }finally {
-            mmBTS_lock.unlock();
-        }
-
-        while (doWork.get()){
-            mmBTS.receive();
-        }
-        LogData("done working leaving");
     }
 }
