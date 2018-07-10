@@ -67,10 +67,12 @@ public class BaseThread extends Thread {
 
     // Closes the client socket and causes the thread to finish.
     // (all blocking calls are on a socket, any socket exception exits code)
+    // call from a different thread
     public void cancel() {
         LogData("Canceling thread");
         try {
-            mmSocket.close();
+            if (mmSocket!= null)
+                mmSocket.close();
         } catch (IOException e) {
             LogData("Canceling thread,  mmSocket.close() threw exception");
             Log.e(TAG, "Could not close the client socket", e);

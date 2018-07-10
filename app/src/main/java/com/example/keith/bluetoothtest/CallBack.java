@@ -10,4 +10,5 @@ package com.example.keith.bluetoothtest;
 public interface CallBack {
     void displayinTV(String info);
     void onCommandReceived(String command);
+
 }

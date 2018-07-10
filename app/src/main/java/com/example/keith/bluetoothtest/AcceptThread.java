@@ -60,7 +60,8 @@ class AcceptThread extends BaseThread {
     public void cancel() {
         super.cancel();
         try {
-            mmServerSocket.close();
+            if (mmServerSocket!= null)
+                mmServerSocket.close();
         } catch (IOException e) {
             Log.e(TAG, "Could not close mmServerSocket", e);
         }

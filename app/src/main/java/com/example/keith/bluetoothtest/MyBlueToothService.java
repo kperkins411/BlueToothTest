@@ -15,6 +15,7 @@ import java.io.UnsupportedEncodingException;
 
 public class MyBlueToothService {
     private static final String TAG = "MyBluetoothService";
+    private static final int MAX_BYTES_AT_A_TIME = 1024 ;
 
     private final BluetoothSocket mmSocket;
     private final InputStream mmInStream;
@@ -49,7 +50,7 @@ public class MyBlueToothService {
 
     //Service, do this in a thread
     public void receive() {
-        mmBuffer = new byte[1024];
+        mmBuffer = new byte[MAX_BYTES_AT_A_TIME];
         int numBytes; // bytes returned from read()
 
         // Keep listening to the InputStream until an exception occurs.
@@ -73,7 +74,7 @@ public class MyBlueToothService {
     }
 
     //Client
-    //Call this from the main activity to send data to the remote device.
+    //Call from seperate thread to send bytes.
     public boolean send(String info) {
         byte[] bytes = new byte[0];
         try {
@@ -85,8 +86,7 @@ public class MyBlueToothService {
         }
 
         try {
-            //TODO maybe do this on seperate thread?
-            mmOutStream.write(bytes);
+             mmOutStream.write(bytes);
         } catch (IOException e) {
             Log.e(TAG, "Error occurred when sending data", e);
             LogData("Error occurred when sending data");
